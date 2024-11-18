@@ -21,8 +21,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class keyFrame extends javax.swing.JFrame {
     
-    private JTextArea areaTestoRiferimento;
-    private JLabel etichettaParolaCorrente, etichettaErrori;
     private AtomicLong startTime;
     private String nomeGiocatore;
     private List<String> paroleDaScrivere;
@@ -33,6 +31,7 @@ public class keyFrame extends javax.swing.JFrame {
      */
     public keyFrame() {
         initComponents();
+        configureRankingKeyListener();
         initCustomLogic();
         
         UsernamePage.setVisible(true);
@@ -63,6 +62,8 @@ public class keyFrame extends javax.swing.JFrame {
         sfondo2 = new javax.swing.JLabel();
         KeyDigitation = new javax.swing.JPanel();
         digitationText = new javax.swing.JTextField();
+        errorsText = new javax.swing.JTextField();
+        currentText = new javax.swing.JTextField();
         jLabel5 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
@@ -162,9 +163,22 @@ public class keyFrame extends javax.swing.JFrame {
         KeyDigitation.add(digitationText);
         digitationText.setBounds(37, 42, 654, 213);
 
+        errorsText.setBackground(new java.awt.Color(217, 217, 217));
+        errorsText.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                errorsTextActionPerformed(evt);
+            }
+        });
+        KeyDigitation.add(errorsText);
+        errorsText.setBounds(555, 295, 52, 22);
+
+        currentText.setBackground(new java.awt.Color(217, 217, 217));
+        KeyDigitation.add(currentText);
+        currentText.setBounds(206, 297, 52, 22);
+
         jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/keyCompetition/currentWord.png"))); // NOI18N
         KeyDigitation.add(jLabel5);
-        jLabel5.setBounds(37, 276, 229, 62);
+        jLabel5.setBounds(37, 276, 230, 62);
 
         jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/keyCompetition/digitation.png"))); // NOI18N
         KeyDigitation.add(jLabel3);
@@ -260,6 +274,20 @@ public class keyFrame extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
     
+    private void configureRankingKeyListener() {
+    Ranking.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+            if (e.getKeyCode() == KeyEvent.VK_ENTER) { // Controlla se è stato premuto "Invio"
+                chiudiApplicazione(); // Chiama la funzione per chiudere l'applicazione
+            }
+        }
+    });
+
+    // Assicurati che la scheda `Ranking` possa ricevere il focus
+    Ranking.setFocusable(true);
+    }
+    
     private void initCustomLogic() {
 
         // Azione per il campo di inserimento nome (prima scheda)
@@ -293,7 +321,7 @@ public class keyFrame extends javax.swing.JFrame {
                     indiceParolaCorrente++;
                     userText.setText("");
                     if (indiceParolaCorrente < paroleDaScrivere.size()) {
-                        etichettaParolaCorrente.setText("Parola corrente: " + paroleDaScrivere.get(indiceParolaCorrente));
+                        currentText.setText(paroleDaScrivere.get(indiceParolaCorrente));
                     } else {
                         long tempoImpiegato = System.currentTimeMillis() - startTime.get();
                         userText.setEditable(false);
@@ -302,7 +330,7 @@ public class keyFrame extends javax.swing.JFrame {
                     }
                 } else if (!parolaCorrente.startsWith(testoInserito)) {
                     numeroErroriCorrenti++;
-                    etichettaErrori.setText("Errori: " + numeroErroriCorrenti);
+                    errorsText.setText("Errori: " + numeroErroriCorrenti);
                 }
             }
         });
@@ -314,8 +342,8 @@ public class keyFrame extends javax.swing.JFrame {
             Collections.shuffle(paroleDaScrivere);
             paroleDaScrivere = paroleDaScrivere.subList(0, numeroParole);
         }
-        areaTestoRiferimento.setText(String.join(" ", paroleDaScrivere));
-        etichettaParolaCorrente.setText("Parola corrente: " + paroleDaScrivere.get(0));
+        digitationText.setText(String.join(" ", paroleDaScrivere));
+        currentText.setText("Parola corrente: " + paroleDaScrivere.get(0));
         startTime = new AtomicLong();
         numeroErroriCorrenti = 0;
         indiceParolaCorrente = 0;
@@ -334,7 +362,7 @@ public class keyFrame extends javax.swing.JFrame {
     private List<String> caricaParoleDaFile(String nomeFile) {
         List<String> parole = new ArrayList<>();
         try {
-            List<String> lines = Files.readAllLines(Paths.get(nomeFile));
+            List<String> lines = Files.readAllLines(Paths.get("C:\\Users\\PPiC\\Desktop\\inf\\scrittura\\scrittura\\src\\keyCompetition\\parole.txt"));
             for (String line : lines) {
                 if (!line.trim().isEmpty()) {
                     parole.add(line.trim());
@@ -392,6 +420,10 @@ public class keyFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_Button30ActionPerformed
 
+    private void errorsTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_errorsTextActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_errorsTextActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -410,7 +442,9 @@ public class keyFrame extends javax.swing.JFrame {
     private javax.swing.JTextField UserText;
     private javax.swing.JPanel UsernamePage;
     private javax.swing.JPanel WordsOption;
+    private javax.swing.JTextField currentText;
     private javax.swing.JTextField digitationText;
+    private javax.swing.JTextField errorsText;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
