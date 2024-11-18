@@ -160,6 +160,7 @@ public class keyFrame extends javax.swing.JFrame {
         digitationText.setBackground(new java.awt.Color(217, 217, 217));
         digitationText.setColumns(20);
         digitationText.setRows(5);
+        digitationText.setWrapStyleWord(true);
         KeyDigitation.add(digitationText);
         digitationText.setBounds(37, 42, 654, 213);
 
@@ -342,6 +343,8 @@ public class keyFrame extends javax.swing.JFrame {
     }
     
     private void mostraSchedaDigitazione(int numeroParole) {
+        digitationText.setLineWrap(true); // Abilita l'auto wrapping
+        digitationText.setWrapStyleWord(true); // Imposta il ritorno a capo per parole intere
         paroleDaScrivere = caricaParoleDaFile("parole.txt");
         if (paroleDaScrivere.size() > numeroParole) {
             Collections.shuffle(paroleDaScrivere);
@@ -359,6 +362,7 @@ public class keyFrame extends javax.swing.JFrame {
     }
     
     private void mostraClassifica() {
+        setSize(438,410);
         KeyDigitation.setVisible(false);
         Ranking.setVisible(true); // Mostra la scheda della classifica
     }
