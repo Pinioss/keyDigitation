@@ -34,6 +34,11 @@ public class keyFrame extends javax.swing.JFrame {
         configureRankingKeyListener();
         initCustomLogic();
         
+        // Rimuovi dimensioni prefissate e usa layout manager appropriato
+        setSize(296,408);
+        setLocationRelativeTo(null); // Centra il frame sullo schermo
+        setResizable(false); // Evita ridimensionamenti indesiderati
+        
         UsernamePage.setVisible(true);
         WordsOption.setVisible(false);
         KeyDigitation.setVisible(false);
@@ -61,7 +66,7 @@ public class keyFrame extends javax.swing.JFrame {
         Button30 = new javax.swing.JButton();
         sfondo2 = new javax.swing.JLabel();
         KeyDigitation = new javax.swing.JPanel();
-        digitationText = new javax.swing.JTextField();
+        digitationText = new javax.swing.JTextArea();
         errorsText = new javax.swing.JTextField();
         currentText = new javax.swing.JTextField();
         jLabel5 = new javax.swing.JLabel();
@@ -153,13 +158,8 @@ public class keyFrame extends javax.swing.JFrame {
         KeyDigitation.setLayout(null);
 
         digitationText.setBackground(new java.awt.Color(217, 217, 217));
-        digitationText.setBorder(null);
-        digitationText.setOpaque(false);
-        digitationText.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                digitationTextActionPerformed(evt);
-            }
-        });
+        digitationText.setColumns(20);
+        digitationText.setRows(5);
         KeyDigitation.add(digitationText);
         digitationText.setBounds(37, 42, 654, 213);
 
@@ -243,7 +243,7 @@ public class keyFrame extends javax.swing.JFrame {
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                     .addGap(0, 0, Short.MAX_VALUE)
-                    .addComponent(KeyDigitation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(KeyDigitation, javax.swing.GroupLayout.PREFERRED_SIZE, 729, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGap(0, 0, Short.MAX_VALUE)))
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
@@ -262,7 +262,7 @@ public class keyFrame extends javax.swing.JFrame {
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                     .addGap(0, 0, Short.MAX_VALUE)
-                    .addComponent(KeyDigitation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(KeyDigitation, javax.swing.GroupLayout.PREFERRED_SIZE, 469, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGap(0, 0, Short.MAX_VALUE)))
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
@@ -296,6 +296,7 @@ public class keyFrame extends javax.swing.JFrame {
             if (nomeGiocatore.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Inserisci un nome valido!", "Errore", JOptionPane.ERROR_MESSAGE);
             } else {
+                setSize(296,408);
                 UsernamePage.setVisible(false);
                 WordsOption.setVisible(true); 
             }
@@ -310,30 +311,34 @@ public class keyFrame extends javax.swing.JFrame {
         userText.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
-                if (startTime.get() == 0) {
-                    startTime.set(System.currentTimeMillis());
-                }
+        if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
+            return; // Ignora "Backspace"
+        }
 
-                String testoInserito = userText.getText().trim();
-                String parolaCorrente = paroleDaScrivere.get(indiceParolaCorrente);
+        if (startTime.get() == 0) {
+            startTime.set(System.currentTimeMillis());
+        }
 
-                if (testoInserito.equals(parolaCorrente)) {
-                    indiceParolaCorrente++;
-                    userText.setText("");
-                    if (indiceParolaCorrente < paroleDaScrivere.size()) {
-                        currentText.setText(paroleDaScrivere.get(indiceParolaCorrente));
-                    } else {
-                        long tempoImpiegato = System.currentTimeMillis() - startTime.get();
-                        userText.setEditable(false);
-                        inviaDatiAlServer(nomeGiocatore, tempoImpiegato, numeroErroriCorrenti);
-                        mostraClassifica();
-                    }
-                } else if (!parolaCorrente.startsWith(testoInserito)) {
-                    numeroErroriCorrenti++;
-                    errorsText.setText("Errori: " + numeroErroriCorrenti);
-                }
+        String testoInserito = userText.getText().trim();
+        String parolaCorrente = paroleDaScrivere.get(indiceParolaCorrente);
+
+        if (testoInserito.equals(parolaCorrente)) {
+            indiceParolaCorrente++;
+            userText.setText("");
+            if (indiceParolaCorrente < paroleDaScrivere.size()) {
+                currentText.setText(paroleDaScrivere.get(indiceParolaCorrente));
+            } else {
+                long tempoImpiegato = System.currentTimeMillis() - startTime.get();
+                userText.setEditable(false);
+                inviaDatiAlServer(nomeGiocatore, tempoImpiegato, numeroErroriCorrenti);
+                mostraClassifica();
             }
-        });
+        } else if (!parolaCorrente.startsWith(testoInserito)) {
+            numeroErroriCorrenti++;
+            errorsText.setText(String.valueOf(numeroErroriCorrenti));
+        }
+    }
+});
     }
     
     private void mostraSchedaDigitazione(int numeroParole) {
@@ -343,11 +348,12 @@ public class keyFrame extends javax.swing.JFrame {
             paroleDaScrivere = paroleDaScrivere.subList(0, numeroParole);
         }
         digitationText.setText(String.join(" ", paroleDaScrivere));
-        currentText.setText("Parola corrente: " + paroleDaScrivere.get(0));
+        currentText.setText(paroleDaScrivere.get(0));
         startTime = new AtomicLong();
         numeroErroriCorrenti = 0;
         indiceParolaCorrente = 0;
-
+        
+        setSize(746,510);
         WordsOption.setVisible(false);
         KeyDigitation.setVisible(true);
     }
@@ -404,10 +410,6 @@ public class keyFrame extends javax.swing.JFrame {
      
     }//GEN-LAST:event_UserTextActionPerformed
 
-    private void digitationTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_digitationTextActionPerformed
-        
-    }//GEN-LAST:event_digitationTextActionPerformed
-
     private void Button10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Button10ActionPerformed
        
     }//GEN-LAST:event_Button10ActionPerformed
@@ -443,7 +445,7 @@ public class keyFrame extends javax.swing.JFrame {
     private javax.swing.JPanel UsernamePage;
     private javax.swing.JPanel WordsOption;
     private javax.swing.JTextField currentText;
-    private javax.swing.JTextField digitationText;
+    private javax.swing.JTextArea digitationText;
     private javax.swing.JTextField errorsText;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
