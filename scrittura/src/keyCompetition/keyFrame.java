@@ -4,21 +4,37 @@
  */
 package keyCompetition;
 
-import javax.swing.table.DefaultTableModel;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.net.*;
+import java.nio.file.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
  * @author Pini
  */
 public class keyFrame extends javax.swing.JFrame {
-       private Client client;
-    /**
+    
+    private JTextArea areaTestoRiferimento;
+    private JLabel etichettaParolaCorrente, etichettaErrori;
+    private AtomicLong startTime;
+    private String nomeGiocatore;
+    private List<String> paroleDaScrivere;
+    private int numeroErroriCorrenti;
+    private int indiceParolaCorrente;
+     /**
      * Creates new form keyFrame
      */
     public keyFrame() {
         initComponents();
+        initCustomLogic();
         
-        client = new Client("127.0.0.1", 1235);  // Modifica l'indirizzo e la porta se necessario
         UsernamePage.setVisible(true);
         WordsOption.setVisible(false);
         KeyDigitation.setVisible(false);
@@ -244,25 +260,128 @@ public class keyFrame extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
     
+    private void initCustomLogic() {
+
+        // Azione per il campo di inserimento nome (prima scheda)
+        UserText.addActionListener(e -> {
+            nomeGiocatore = UserText.getText().trim();
+            if (nomeGiocatore.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Inserisci un nome valido!", "Errore", JOptionPane.ERROR_MESSAGE);
+            } else {
+                UsernamePage.setVisible(false);
+                WordsOption.setVisible(true); 
+            }
+        });
+
+        // Azione per i pulsanti delle parole (seconda scheda)
+        Button10.addActionListener(e -> mostraSchedaDigitazione(10));
+        Button20.addActionListener(e -> mostraSchedaDigitazione(20));
+        Button30.addActionListener(e -> mostraSchedaDigitazione(30));
+
+        // Aggiungi un listener al campo di testo per la digitazione
+        userText.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (startTime.get() == 0) {
+                    startTime.set(System.currentTimeMillis());
+                }
+
+                String testoInserito = userText.getText().trim();
+                String parolaCorrente = paroleDaScrivere.get(indiceParolaCorrente);
+
+                if (testoInserito.equals(parolaCorrente)) {
+                    indiceParolaCorrente++;
+                    userText.setText("");
+                    if (indiceParolaCorrente < paroleDaScrivere.size()) {
+                        etichettaParolaCorrente.setText("Parola corrente: " + paroleDaScrivere.get(indiceParolaCorrente));
+                    } else {
+                        long tempoImpiegato = System.currentTimeMillis() - startTime.get();
+                        userText.setEditable(false);
+                        inviaDatiAlServer(nomeGiocatore, tempoImpiegato, numeroErroriCorrenti);
+                        mostraClassifica();
+                    }
+                } else if (!parolaCorrente.startsWith(testoInserito)) {
+                    numeroErroriCorrenti++;
+                    etichettaErrori.setText("Errori: " + numeroErroriCorrenti);
+                }
+            }
+        });
+    }
+    
+    private void mostraSchedaDigitazione(int numeroParole) {
+        paroleDaScrivere = caricaParoleDaFile("parole.txt");
+        if (paroleDaScrivere.size() > numeroParole) {
+            Collections.shuffle(paroleDaScrivere);
+            paroleDaScrivere = paroleDaScrivere.subList(0, numeroParole);
+        }
+        areaTestoRiferimento.setText(String.join(" ", paroleDaScrivere));
+        etichettaParolaCorrente.setText("Parola corrente: " + paroleDaScrivere.get(0));
+        startTime = new AtomicLong();
+        numeroErroriCorrenti = 0;
+        indiceParolaCorrente = 0;
+
+        WordsOption.setVisible(false);
+        KeyDigitation.setVisible(true);
+    }
+    
+    private void mostraClassifica() {
+        KeyDigitation.setVisible(false);
+        Ranking.setVisible(true); // Mostra la scheda della classifica
+    }
+    
+    
+    
+    private List<String> caricaParoleDaFile(String nomeFile) {
+        List<String> parole = new ArrayList<>();
+        try {
+            List<String> lines = Files.readAllLines(Paths.get(nomeFile));
+            for (String line : lines) {
+                if (!line.trim().isEmpty()) {
+                    parole.add(line.trim());
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return parole;
+    }
+    
+    private void inviaDatiAlServer(String nome, long tempo, int errori) {
+        String host = "localhost";
+        int porta = 1235;
+
+        try (Socket socket = new Socket(host, porta);
+             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+             DataInputStream in = new DataInputStream(socket.getInputStream())) {
+
+            out.writeUTF(nome);
+            out.writeLong(tempo);
+            out.writeInt(errori);
+            out.flush();
+
+            String posizione = in.readUTF();
+            JOptionPane.showMessageDialog(this, "Posizione in classifica: " + posizione, "Classifica", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Errore di connessione al server", "Errore", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+    
+    private void chiudiApplicazione() {
+        System.exit(0);
+    }
+    
     private void UserTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_UserTextActionPerformed
-        // TODO add your handling code here:
-        String username = UserText.getText();
-    client.sendUsername(username);
-    // Passa alla schermata successiva
-    WordsOption.setVisible(true);
-    UsernamePage.setVisible(false);
+     
     }//GEN-LAST:event_UserTextActionPerformed
 
     private void digitationTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_digitationTextActionPerformed
-        // TODO add your handling code here:
-        String text = digitationText.getText();
-    client.sendTypingData(text);
+        
     }//GEN-LAST:event_digitationTextActionPerformed
 
     private void Button10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Button10ActionPerformed
-        // TODO add your handling code here:
-        WordsOption.setVisible(false);
-        KeyDigitation.setVisible(true);
+       
     }//GEN-LAST:event_Button10ActionPerformed
 
     private void Button20ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Button20ActionPerformed
@@ -272,31 +391,16 @@ public class keyFrame extends javax.swing.JFrame {
     private void Button30ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Button30ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_Button30ActionPerformed
-private void updateRanking() {
-    String ranking = client.getRanking();
-    // Aggiorna la tabella con la classifica
-    String[] rows = ranking.split("\n");  // Assume che il server invii la classifica riga per riga
-    for (String row : rows) {
-        // Aggiungi la riga alla tabella
-        ((DefaultTableModel) rankTable.getModel()).addRow(new Object[] {row});
-    }
-}
 
-private void closeConnection() {
-        client.close();
-    }
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-        public void run() {
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
             keyFrame frame = new keyFrame();
             frame.setVisible(true);
-        }
-    });
+        });
     }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton Button10;
     private javax.swing.JButton Button20;
