@@ -162,6 +162,7 @@ public class keyFrame extends javax.swing.JFrame {
         digitationText.setBackground(new java.awt.Color(217, 217, 217));
         digitationText.setColumns(20);
         digitationText.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+        digitationText.setLineWrap(true);
         digitationText.setRows(5);
         digitationText.setWrapStyleWord(true);
         KeyDigitation.add(digitationText);
