@@ -90,6 +90,7 @@ public class keyFrame extends javax.swing.JFrame {
         UsernamePage.setLayout(null);
 
         UserText.setBackground(new java.awt.Color(217, 217, 217));
+        UserText.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         UserText.setOpaque(false);
         UserText.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -157,25 +158,31 @@ public class keyFrame extends javax.swing.JFrame {
         KeyDigitation.setPreferredSize(new java.awt.Dimension(729, 469));
         KeyDigitation.setLayout(null);
 
+        digitationText.setEditable(false);
         digitationText.setBackground(new java.awt.Color(217, 217, 217));
         digitationText.setColumns(20);
+        digitationText.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         digitationText.setRows(5);
         digitationText.setWrapStyleWord(true);
         KeyDigitation.add(digitationText);
         digitationText.setBounds(37, 42, 654, 213);
 
+        errorsText.setEditable(false);
         errorsText.setBackground(new java.awt.Color(217, 217, 217));
+        errorsText.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         errorsText.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 errorsTextActionPerformed(evt);
             }
         });
         KeyDigitation.add(errorsText);
-        errorsText.setBounds(555, 295, 52, 22);
+        errorsText.setBounds(555, 290, 52, 31);
 
+        currentText.setEditable(false);
         currentText.setBackground(new java.awt.Color(217, 217, 217));
+        currentText.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         KeyDigitation.add(currentText);
-        currentText.setBounds(206, 297, 110, 22);
+        currentText.setBounds(210, 293, 100, 31);
 
         jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/keyCompetition/currentWord.png"))); // NOI18N
         KeyDigitation.add(jLabel5);
@@ -190,7 +197,13 @@ public class keyFrame extends javax.swing.JFrame {
         jLabel6.setBounds(462, 274, 229, 62);
 
         userText.setBackground(new java.awt.Color(217, 217, 217));
+        userText.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         userText.setOpaque(false);
+        userText.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                userTextActionPerformed(evt);
+            }
+        });
         KeyDigitation.add(userText);
         userText.setBounds(37, 354, 654, 58);
 
@@ -214,6 +227,7 @@ public class keyFrame extends javax.swing.JFrame {
         jScrollPane1.setBackground(new java.awt.Color(217, 217, 217));
 
         rankTable.setBackground(new java.awt.Color(217, 217, 217));
+        rankTable.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         rankTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null}
@@ -440,6 +454,10 @@ public class keyFrame extends javax.swing.JFrame {
     private void errorsTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_errorsTextActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_errorsTextActionPerformed
+
+    private void userTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_userTextActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_userTextActionPerformed
 
     /**
      * @param args the command line arguments
