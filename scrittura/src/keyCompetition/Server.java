@@ -1,92 +1,98 @@
-package keyCompetition;
-
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class Server {
-    private static List<Partecipante> partecipanti = new ArrayList<>();
+    private static List<Giocatore> classifica = new ArrayList<>();
 
     public static void main(String[] args) {
-        int porta = 1235;
-
-        try (ServerSocket serverSocket = new ServerSocket(porta)) {
-            System.out.println("Server in attesa di connessioni...");
-
+        try {
+            ServerSocket serverSocket = new ServerSocket(1235);
+            System.out.println("Server in ascolto...");
+            
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Nuovo partecipante connesso.");
-                gestisciClient(clientSocket);
+                DataInputStream input = new DataInputStream(clientSocket.getInputStream());
+                DataOutputStream output = new DataOutputStream(clientSocket.getOutputStream());
+
+                // Ricezione dei dati dal client
+                String nomeGiocatore = input.readUTF();
+                long tempoCompleto = input.readLong();
+                int numeroErrori = input.readInt();
+                int numeroParole = input.readInt(); // Ricevi il numero di parole
+                
+                // Elaborazione dei dati (calcolo della velocità e precisione)
+                double velocita = calcolaVelocita(tempoCompleto, numeroParole);
+                double precisione = calcolaPrecisione(numeroErrori, numeroParole);
+                
+                // Aggiungi il giocatore alla classifica
+                Giocatore giocatore = new Giocatore(nomeGiocatore, tempoCompleto, velocita, precisione);
+                classifica.add(giocatore);
+                
+                // Ordinamento della classifica (per precisione)
+                classifica.sort(Comparator.comparingDouble(Giocatore::getPrecisione).reversed());
+
+                // Invio della classifica aggiornata al client
+                output.writeInt(classifica.size());
+                for (Giocatore g : classifica) {
+                    output.writeUTF(g.getNome());
+                    output.writeLong(g.getTempo());
+                    output.writeDouble(g.getVelocita());
+                    output.writeDouble(g.getPrecisione());
+                }
+
+                // Chiusura della connessione
+                input.close();
+                output.close();
+                clientSocket.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+    
+    private static double calcolaVelocita(long tempo, int numeroParole) {
+        int numeroCaratteri = numeroParole * 6; // Supponendo una media di 6 caratteri per parola
+        return (numeroCaratteri * 1000.0) / tempo; // velocità in caratteri al secondo
+    }
+    
+    private static double calcolaPrecisione(int errori, int numeroParole) {
+        int numeroCaratteri = numeroParole * 6; // Supponendo una media di 6 caratteri per parola
+        return 100.0 - ((double) errori / numeroCaratteri) * 100; // percentuale di precisione
+    }
+}
 
-    private static void gestisciClient(Socket clientSocket) {
-        try (DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream())) {
+class Giocatore {
+    private String nome;
+    private long tempo;
+    private double velocita;
+    private double precisione;
 
-            // Riceve i dati dal client
-            String nome = in.readUTF();
-            long tempo = in.readLong();
-            int errori = in.readInt();
-            Partecipante partecipante = new Partecipante(nome, tempo, errori);
-            partecipanti.add(partecipante);
-            System.out.println("Dati ricevuti da " + nome);
-
-            // Ordina la classifica per tempo e numero di errori
-            Collections.sort(partecipanti, Comparator.comparingLong(Partecipante::getTempoCompletamento)
-                    .thenComparingInt(Partecipante::getErrori));
-
-            // Calcola la posizione del partecipante appena aggiunto
-            int posizione = partecipanti.indexOf(partecipante) + 1;
-
-            // Invia al client solo la propria posizione
-            out.writeUTF("La tua posizione in classifica è: " + posizione);
-            out.flush();
-
-            // Visualizza la classifica aggiornata nella console del server
-            System.out.println("Classifica aggiornata:");
-            for (int i = 0; i < partecipanti.size(); i++) {
-                System.out.println((i + 1) + ". " + partecipanti.get(i));
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public Giocatore(String nome, long tempo, double velocita, double precisione) {
+        this.nome = nome;
+        this.tempo = tempo;
+        this.velocita = velocita;
+        this.precisione = precisione;
     }
 
-    // Classe interna Partecipante
-    private static class Partecipante {
-        private String nome;
-        private long tempoCompletamento;
-        private int errori;
+    public String getNome() {
+        return nome;
+    }
 
-        public Partecipante(String nome, long tempoCompletamento, int errori) {
-            this.nome = nome;
-            this.tempoCompletamento = tempoCompletamento;
-            this.errori = errori;
-        }
+    public long getTempo() {
+        return tempo;
+    }
 
-        public String getNome() {
-            return nome;
-        }
+    public double getVelocita() {
+        return velocita;
+    }
 
-        public long getTempoCompletamento() {
-            return tempoCompletamento;
-        }
+    public double getPrecisione() {
+        return precisione;
+    }
 
-        public int getErrori() {
-            return errori;
-        }
-
-        @Override
-        public String toString() {
-            return "Nome: " + nome + ", Tempo: " + tempoCompletamento + " ms, Errori: " + errori;
-        }
+    @Override
+    public String toString() {
+        return nome + " - Tempo: " + tempo + "ms, Velocità: " + velocita + " cps, Precisione: " + precisione + "%";
     }
 }

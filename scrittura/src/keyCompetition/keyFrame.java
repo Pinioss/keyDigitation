@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -82,7 +83,6 @@ public class keyFrame extends javax.swing.JFrame {
         sfondo4 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(282, 370));
 
         UsernamePage.setBackground(new java.awt.Color(51, 51, 51));
         UsernamePage.setOpaque(false);
@@ -175,11 +175,11 @@ public class keyFrame extends javax.swing.JFrame {
 
         currentText.setBackground(new java.awt.Color(217, 217, 217));
         KeyDigitation.add(currentText);
-        currentText.setBounds(206, 297, 52, 22);
+        currentText.setBounds(206, 297, 110, 22);
 
         jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/keyCompetition/currentWord.png"))); // NOI18N
         KeyDigitation.add(jLabel5);
-        jLabel5.setBounds(37, 276, 230, 62);
+        jLabel5.setBounds(37, 276, 290, 62);
 
         jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/keyCompetition/digitation.png"))); // NOI18N
         KeyDigitation.add(jLabel3);
@@ -219,7 +219,7 @@ public class keyFrame extends javax.swing.JFrame {
                 {null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "Nome", "Tempo", "Velocità", "Precisione"
             }
         ));
         jScrollPane1.setViewportView(rankTable);
@@ -329,45 +329,78 @@ public class keyFrame extends javax.swing.JFrame {
             if (indiceParolaCorrente < paroleDaScrivere.size()) {
                 currentText.setText(paroleDaScrivere.get(indiceParolaCorrente));
             } else {
-                long tempoImpiegato = System.currentTimeMillis() - startTime.get();
                 userText.setEditable(false);
-                inviaDatiAlServer(nomeGiocatore, tempoImpiegato, numeroErroriCorrenti);
                 mostraClassifica();
             }
         } else if (!parolaCorrente.startsWith(testoInserito)) {
             numeroErroriCorrenti++;
             errorsText.setText(String.valueOf(numeroErroriCorrenti));
         }
-    }
-});
-    }
-    
-    private void mostraSchedaDigitazione(int numeroParole) {
-        digitationText.setLineWrap(true); // Abilita l'auto wrapping
-        digitationText.setWrapStyleWord(true); // Imposta il ritorno a capo per parole intere
-        paroleDaScrivere = caricaParoleDaFile("parole.txt");
-        if (paroleDaScrivere.size() > numeroParole) {
-            Collections.shuffle(paroleDaScrivere);
-            paroleDaScrivere = paroleDaScrivere.subList(0, numeroParole);
         }
-        digitationText.setText(String.join(" ", paroleDaScrivere));
-        currentText.setText(paroleDaScrivere.get(0));
-        startTime = new AtomicLong();
-        numeroErroriCorrenti = 0;
-        indiceParolaCorrente = 0;
-        
-        setSize(746,510);
-        WordsOption.setVisible(false);
-        KeyDigitation.setVisible(true);
+        });
     }
-    
+
+    private void mostraSchedaDigitazione(int numeroParole) {
+    paroleDaScrivere = caricaParoleDaFile("parole.txt");
+    if (paroleDaScrivere.size() > numeroParole) {
+        Collections.shuffle(paroleDaScrivere);
+        paroleDaScrivere = paroleDaScrivere.subList(0, numeroParole);
+    }
+    digitationText.setText(String.join(" ", paroleDaScrivere));
+    currentText.setText(paroleDaScrivere.get(0));
+    startTime = new AtomicLong();
+    numeroErroriCorrenti = 0;
+    indiceParolaCorrente = 0;
+
+    setSize(746,510);
+    WordsOption.setVisible(false);
+    KeyDigitation.setVisible(true);
+}
+
     private void mostraClassifica() {
-        setSize(438,410);
-        KeyDigitation.setVisible(false);
-        Ranking.setVisible(true); // Mostra la scheda della classifica
+    try {
+        String host = "localhost";
+        int porta = 1235;
+        Socket socket = new Socket(host, porta);
+        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+        DataInputStream in = new DataInputStream(socket.getInputStream());
+
+        out.writeUTF(nomeGiocatore);
+        out.writeLong(System.currentTimeMillis() - startTime.get());
+        out.writeInt(numeroErroriCorrenti);
+        out.writeInt(paroleDaScrivere.size()); // Invia il numero di parole
+        out.flush();
+
+        DefaultTableModel model = (DefaultTableModel) rankTable.getModel();
+        model.setRowCount(0); // Pulisce la tabella prima di aggiungere i nuovi dati
+
+        int size = in.readInt();
+        for (int i = 0; i < size; i++) {
+            String nome = in.readUTF();
+            long tempo = in.readLong();
+            double velocita = in.readDouble();
+            double precisione = in.readDouble();
+            model.addRow(new Object[] {
+                nome,
+                String.format("%.2f", (double) tempo / 1000) + " s",
+                String.format("%.2f", velocita) + " cps",
+                String.format("%.2f", precisione) + " %"
+            });
+        }
+
+        in.close();
+        out.close();
+        socket.close();
+    } catch (IOException ex) {
+        JOptionPane.showMessageDialog(this, "Errore di connessione al server", "Errore", JOptionPane.ERROR_MESSAGE);
+        ex.printStackTrace();
     }
-    
-    
+
+    setSize(438,410);
+    KeyDigitation.setVisible(false);
+    Ranking.setVisible(true);
+}
+
     
     private List<String> caricaParoleDaFile(String nomeFile) {
         List<String> parole = new ArrayList<>();
@@ -382,28 +415,6 @@ public class keyFrame extends javax.swing.JFrame {
             e.printStackTrace();
         }
         return parole;
-    }
-    
-    private void inviaDatiAlServer(String nome, long tempo, int errori) {
-        String host = "localhost";
-        int porta = 1235;
-
-        try (Socket socket = new Socket(host, porta);
-             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-             DataInputStream in = new DataInputStream(socket.getInputStream())) {
-
-            out.writeUTF(nome);
-            out.writeLong(tempo);
-            out.writeInt(errori);
-            out.flush();
-
-            String posizione = in.readUTF();
-            JOptionPane.showMessageDialog(this, "Posizione in classifica: " + posizione, "Classifica", JOptionPane.INFORMATION_MESSAGE);
-
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "Errore di connessione al server", "Errore", JOptionPane.ERROR_MESSAGE);
-            ex.printStackTrace();
-        }
     }
     
     private void chiudiApplicazione() {
