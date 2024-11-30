@@ -85,7 +85,6 @@ public class keyFrame extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         UsernamePage.setBackground(new java.awt.Color(51, 51, 51));
-        UsernamePage.setOpaque(false);
         UsernamePage.setPreferredSize(new java.awt.Dimension(281, 370));
         UsernamePage.setLayout(null);
 
@@ -108,6 +107,7 @@ public class keyFrame extends javax.swing.JFrame {
         UsernamePage.add(jLabel1);
         jLabel1.setBounds(51, 157, 179, 90);
 
+        sfondo1.setBackground(new java.awt.Color(0, 0, 0));
         sfondo1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/keyCompetition/Username.png"))); // NOI18N
         UsernamePage.add(sfondo1);
         sfondo1.setBounds(0, 0, 282, 370);
